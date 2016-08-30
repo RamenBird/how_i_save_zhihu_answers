@@ -31,22 +31,7 @@ def test(url = test_answer_url):
     s = __getPageContent(url)
     return answerparser.parseAnswer(s)
 
-class _config(dict):
 
-    def __getattr__(self, attr):
-        if attr in self:
-            return self[attr]
-
-        return 0
-
-config = _config()
-config['width'] = 640
-config['top_padding'] = 50
-config['left_padding'] = 20
-config['right_padding'] = 20
-config['bottom_padding'] = 50
-config['line_spacing'] = 5
-config['tmp_dir'] = "C:/Users/Administrator/Desktop/a"
 
 answerdrawer = AnswerDraw(test(), ImageBuilder(), config)
 answerdrawer.draw()

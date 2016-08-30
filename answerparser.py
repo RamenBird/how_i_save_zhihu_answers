@@ -1,7 +1,10 @@
-from zhihuanswer import ZhihuAns, LinkNode, ImageNode, NodeGroup, ErrorNode
-from zhihuanswer import ChangeLine
-from zhihuanswer import PlainTextNode
-import zhihuanswer
+from how_i_save_zhihu_answers.zhihuanswer import ZhihuAns
+from how_i_save_zhihu_answers.zhihuanswer import LinkNode
+from how_i_save_zhihu_answers.zhihuanswer import ImageNode
+from how_i_save_zhihu_answers.zhihuanswer import NodeGroup
+from how_i_save_zhihu_answers.zhihuanswer import ErrorNode
+from how_i_save_zhihu_answers.zhihuanswer import ChangeLine
+from how_i_save_zhihu_answers.zhihuanswer import PlainTextNode
 import re
 
 def _replacehtmltransfer(s):

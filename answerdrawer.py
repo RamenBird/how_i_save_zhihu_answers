@@ -1,7 +1,13 @@
-import zhihuanswer
+from how_i_save_zhihu_answers import zhihuanswer
+from how_i_save_zhihu_answers import imagebuilder
 import os
 
 class AnswerDraw(object):
+    @staticmethod
+    def default(answer, config):
+        return AnswerDraw(answer, imagebuilder.ImageBuilder(), config)
+
+    
     def __init__(self, answer, builder, config):
         self._ans = answer
         self._builder = builder
