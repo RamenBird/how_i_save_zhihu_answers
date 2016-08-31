@@ -5,6 +5,7 @@ from how_i_save_zhihu_answers.zhihuanswer import NodeGroup
 from how_i_save_zhihu_answers.zhihuanswer import ErrorNode
 from how_i_save_zhihu_answers.zhihuanswer import ChangeLine
 from how_i_save_zhihu_answers.zhihuanswer import PlainTextNode
+import how_i_save_zhihu_answers.zhihuanswer as zhihuanswer
 import re
 
 def _replacehtmltransfer(s):
@@ -180,11 +181,19 @@ def _parseAnswer(s, rule, depth = 0):
                         
             node = r["parser"](s, nodes)
             return node
-    return ErrorNode(s)             
+    return ErrorNode(s)
 
-def parseAnswer(s):
+def _getanswertitle(s):
+    p = re.compile("<title>(.+?)</title>")
+    i = p.finditer(s)
+    m = next(i)
+    if m:
+        return m.group(1)
+
+def parseanswer(s):
     s1 = _getanswerstr(s)
     if s1:
         ans = ZhihuAns()
         ans.root = _parseAnswer(s1, "r1")
+        ans.title = _getanswertitle(s)
         return ans

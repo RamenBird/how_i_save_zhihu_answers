@@ -1,12 +1,17 @@
-from how_i_save_zhihu_answers.answerdrawer import AnswerDrawer
+
+import how_i_save_zhihu_answers.answerparser
+import time
+import os
 from tornado import httpclient
+
 class _config(dict):
 
     def __getattr__(self, attr):
         if attr in self:
             return self[attr]
 
-        return 0
+        return None
+
 config = _config()
 config['width'] = 640
 config['top_padding'] = 50
@@ -15,9 +20,7 @@ config['right_padding'] = 20
 config['bottom_padding'] = 50
 config['line_spacing'] = 5
 config['tmp_dir'] = "C:/Users/Administrator/Desktop/tmp_dir"
-config['save_tmp_text'] = FALSE
-
-__all__ = ['config', 'save']
+config['save_tmp_text'] = True
 
 def _downloadanswer(url):
     client = httpclient.HTTPClient()
@@ -32,10 +35,48 @@ def _downloadanswer(url):
 
     if response:
         s = str(response.body, 'utf-8')
-        if config["save_tmp_text"]:
-            _saverawanswer(s)
         return s
 
+def _gettmpfilename():    
+    timestamp = time.strftime(r"%Y%m%d%H%M%S", time.localtime())
+    return timestamp + ".txt"
+
+def _saveanswer(filepath, content):
+    file = open(filepath, 'w', encoding='utf-8')
+    file.write(content)
+    file.close()
+
 def save(url):
+    from how_i_save_zhihu_answers.answerdrawer import AnswerDraw as answerdraw
+    from how_i_save_zhihu_answers.imagebuilder import ImageBuilder
+    
     rawstring = _downloadanswer(url)
-    drawer = answerdrawer.Answer().default()
+    ans = how_i_save_zhihu_answers.answerparser.parseanswer(rawstring)
+
+    if rawstring != None and config.save_tmp_text:
+        import os
+        if not os.path.exists(config.tmp_dir):
+            os.mkdir(config.tmp_dir)
+        _saveanswer(os.path.join(config.tmp_dir, _gettmpfilename()), rawstring)
+
+    draw = answerdraw(ans, ImageBuilder(), config)
+    draw.draw()
+
+def img(url):
+    from how_i_save_zhihu_answers.answerdrawer import AnswerImgDownload as answerdraw
+    from how_i_save_zhihu_answers.imagebuilder import ImageBuilder
+    
+    rawstring = _downloadanswer(url)
+    ans = how_i_save_zhihu_answers.answerparser.parseanswer(rawstring)
+
+    if rawstring != None and config.save_tmp_text:
+        import os
+        if not os.path.exists(config.tmp_dir):
+            os.mkdir(config.tmp_dir)
+        _saveanswer(os.path.join(config.tmp_dir, _gettmpfilename()), rawstring)
+        
+    answerdraw(ans, ImageBuilder(), config).download()    
+
+
+__all__ = ['config', 'save', 'img']
+    

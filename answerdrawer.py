@@ -2,11 +2,27 @@ from how_i_save_zhihu_answers import zhihuanswer
 from how_i_save_zhihu_answers import imagebuilder
 import os
 
-class AnswerDraw(object):
-    @staticmethod
-    def default(answer, config):
-        return AnswerDraw(answer, imagebuilder.ImageBuilder(), config)
+class AnswerImgDownload(object):
+    def __init__(self, answer, builder, config):
+        self._ans = answer
+        self._builder = builder
+        self._config = config
 
+    def download(self):
+        import os
+        config = self._config
+
+        outputdir = config.outputpath
+        if outputdir == None:
+            outputdir = r"C:\Users\Administrator\Desktop"
+
+        for node in self._ans.nodes:
+            if isinstance(node, zhihuanswer.ImageNode):                
+                url = node.src
+                self._builder.downloadimage(url, 0, path=outputdir)                
+                
+
+class AnswerDraw(object):
     
     def __init__(self, answer, builder, config):
         self._ans = answer
@@ -32,7 +48,14 @@ class AnswerDraw(object):
             self.drawnode(node, textpaint)
 
         self.height = self.edge + config.bottom_padding
-        builder.save(self.canvas, os.path.join(os.getcwd(), "a.png"))
+
+        outputpath = config.outputpath
+        if outputpath == None:
+            outputpath = r"C:\Users\Administrator\Desktop"
+
+        import re
+        p = re.compile(r"[<>?:|/\*\"]")
+        builder.save(self.canvas, os.path.join(outputpath, p.sub("", self._ans.title) + ".png"))
     
 
     @property
@@ -132,7 +155,7 @@ class AnswerDraw(object):
                 self.drawnode(i, paint)
         elif isinstance(node, zhihuanswer.ImageNode):
             try:
-                url = node.getProperty("data-original")
+                url = node.src
                 img = self._builder.downloadimage(url, config.width - config.left_padding - config.right_padding)
 
                 if self.y + img.height + config.bottom_padding > self.height:

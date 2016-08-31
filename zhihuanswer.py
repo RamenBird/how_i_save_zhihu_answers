@@ -4,7 +4,7 @@ FLAG_UNDERLINED = 1 << 2
 FLAG_PARAGRAPH = 1 << 3
 
 class ZhihuAns(object):
-    __slot__ = ('root')
+    __slot__ = ('root', 'title')
 
     def __repr__(self):
         return str(self.root)
@@ -64,6 +64,13 @@ class ImageNode(object):
         if k in self.__property:
             return self.__property[k]
         return ""
+
+    @property
+    def src(self):
+        if self.getProperty("data-original") == "":
+            return self.getProperty("src")
+
+        return self.getProperty("data-original")
 
 class NodeGroup(object):    
     def __init__(self):

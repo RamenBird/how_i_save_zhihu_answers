@@ -1,6 +1,7 @@
 from PIL import Image, ImageFont, ImageDraw
 from urllib import request
 import time
+import os
 import io
 
 class ImageBuilder(object):
@@ -35,12 +36,17 @@ class ImageBuilder(object):
     def drawimage(self, canvas, image, x, y, width, height):
         canvas.paste(image, (x, y, x + width, y + height))
 
-    def downloadimage(self, url, width):        
+    def downloadimage(self, url, width, path = None):
         name = url[url.rfind("/") : len(url)]
-        path = "C:/Users/Administrator/Desktop/a" + name
-
+        
         file = io.BytesIO(request.urlopen(url).read())
-        img = Image.open(file)
+        img = Image.open(file)        
+        if path != None:
+            img.save(path + name)
+
+        if width == 0:
+            width = img.width
+
         img2 = img.resize((width, int(img.height * width / img.width)))
         file.close()
         return img2
