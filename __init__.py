@@ -1,6 +1,8 @@
-import how_i_save_zhihu_answers.answerparser
-import time
+#encoding:utf-8
+
 import os
+import re
+import time
 from tornado import httpclient
 
 class _config(dict):
@@ -37,7 +39,7 @@ def _downloadanswer(url):
         return s
 
 def _gettmpfilename():    
-    timestamp = time.strftime(r"%Y%m%d%H%M%S", time.localtime())
+    timestamp = time.strftime(r'%Y%m%d%H%M%S', time.localtime())
     return timestamp + ".txt"
 
 def _saveanswer(filepath, content):
@@ -45,21 +47,42 @@ def _saveanswer(filepath, content):
     file.write(content)
     file.close()
 
-def save(url):
-    from how_i_save_zhihu_answers.answerdrawer import AnswerDraw as answerdraw
-    from how_i_save_zhihu_answers.imagebuilder import ImageBuilder
-    
-    rawstring = _downloadanswer(url)
-    ans = how_i_save_zhihu_answers.answerparser.parseanswer(rawstring)
+def _gettmppath():
+    if not os.path.exists('/Users/Administrator/Desktop/Tmp'):
+        os.mkdir('/Users/Administrator/Desktop/Tmp')
 
-    if rawstring != None and config.save_tmp_text:
-        import os
-        if not os.path.exists(config.tmp_dir):
-            os.mkdir(config.tmp_dir)
-        _saveanswer(os.path.join(config.tmp_dir, _gettmpfilename()), rawstring)
+    return '/Users/Administrator/Desktop/Tmp'
 
-    draw = answerdraw(ans, ImageBuilder(), config)
-    draw.draw()
+def content(url):
+    filename = os.path.join(_gettmppath(), _gettmpfilename())
+    client = httpclient.HTTPClient()
+    try:
+        response = client.fetch(url)
+        if response.body:
+            file = open(filename, 'wb')
+            file.write(response.body)
+            file.close()
+            return response.body
+    except httpclient.HTTPError as e:
+        print(e)
+        return None
+    except Exception as e:
+        print(e)
+        return None
+    return None    
+
+def save(answerurl):
+    buffer = content(answerurl)
+    if buffer:
+        c = str(buffer, 'utf-8')
+        p = re.compile('<div class="zm-editable-content clearfix">(.+?)</div>', re.S)
+        m = p.search(c)
+        if m:
+            a = m.group()
+            if a:
+                from how_i_save_zhihu_answers.zhihuparsers import AnswerParser
+                AnswerParser().feed(a)
+        
 
 def img(url):
     from how_i_save_zhihu_answers.answerdrawer import AnswerImgDownload as answerdraw
@@ -77,5 +100,5 @@ def img(url):
     answerdraw(ans, ImageBuilder(), config).download()    
 
 
-__all__ = ['config', 'save', 'img']
+__all__ = ['config', 'saveimage', 'img']
     

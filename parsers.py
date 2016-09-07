@@ -1,5 +1,6 @@
 import re
 import how_i_save_zhihu_answers.zhihuanswer as ans
+import how_i_save_zhihu_answers.answernodes as nodedef
 
 _parsers = {}
 
@@ -42,31 +43,48 @@ class _p1(AnswerParser):
 
     def parsenode(self, s, m = None):
         if m:
-            
+            node = self.parsechild(m.group(1))
+            node.addflag(nodedef.FLAG_QUOTE)
+            return node
         return None
 
 class _p2(AnswerParser):
     tag = 'link'
     
     def __init__(self):
-        self.matchpattern = re.compile('')
-        self.splitpattern = re.compile('')
+        self.matchpattern = re.compile(r'^<a.+?href=\"//link.zhihu.com/\?target=(.+?)\".*?>(.*?)(?=<).*?</a>$|'
+            '^<a.+?href=\"(.+?)\".+?>(.*?)</a>$')
         self.rules = []
 
-    def parsenode(self, s):
-        return None
+    def parsenode(self, s, m = None):
+        if m:
+            node = nodedef.LinkNode()
+            g = m.groups()
+            if g[0]:
+                node.url = g[0]
+                node.text = g[1]
+            else:
+                node.url = g[2]
+                node.text = g[3]
+            return node    
+            
 
 
 class _p3(AnswerParser):
     tag = 'image'
 
     def __init__(self):
-        self.matchpattern = re.compile('')
-        self.splitpattern = re.compile('')
-        self.rules = []
+        self.matchpattern = re.compile('^<noscript><img\\s((?:.+?=".+?")*)>(.*?)</noscript><img.+?>\\2$')
 
-    def parsenode(self, s):
-        return None
+    def parsenode(self, s, m):
+        if m:
+            node = ImageNode()
+            node.title = m.group(2)
+            properties = m.group(1)            
+            pp = re.compile('([^\\s]+?)="(.+?)"')
+            for mm in pp.finditer(properties):
+                node.addProperty(mm.group(1), mm.group(2))
+            return node
 
 _parsers[_p1.tag] = _p1()
 _parsers[_p2.tag] = _p2()
@@ -97,8 +115,7 @@ def _parsetextnode(s, nodes):
 
 def _parseimagenode(s, nodes):
     node = ImageNode()
-    m = re.compile("^<noscript><img\\s((?:.+?=\".+?\")*)>(.*?)</noscript><img.+?>\\2$").match(s)
-    pp = re.compile("([^\\s]+?)=\"(.+?)\"")
+    m = re.compile("").match(s)
     if m:
         node.title = m.group(2)
         if m.group(1):
