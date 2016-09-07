@@ -3,25 +3,32 @@ FLAG_BOLD = 1 << 1
 FLAG_UNDERLINED = 1 << 2
 FLAG_PARAGRAPH = 1 << 3
 
-class ChangeLine(object):
+class Node(object):
+    def __init__(self):
+        self._flag = 0
+        self._attrs = {}
+    
+    def addattr(self, k, v):
+        self._attrs[k] = v
+
+    def getattr(self, k):
+        if k in self._attrs:
+            return self._attrs[k]
+    
+    def addflag(self, f):
+        self._flag = self._flag | f
+
+    def hasflag(self, f):
+        return (f & self._flag) == 0    
+
+class ChangeLine(Node):
     def __str__(self):
         return "CL"
 
-class PlainTextNode(object):
-    __slot__ = ("text")
-
-    def __init__(self, s):
-        self.text = s
-        self.flag = 0
+class PlainTextNode(Node):
 
     def __str__(self):
         return self.text
-
-    def addFlag(self, f):
-        self.flag = self.flag | f
-
-    def hasFlag(self, f):
-        return (f & self.flag) == 0
 
 class LinkNode(object):
     __slot__ = ("url", "text")
@@ -32,27 +39,21 @@ class LinkNode(object):
     def __str__(self):
         return self.text
 
-    def addFlag(self, f):
-        self.flag = self.flag | f
-
-    def hasFlag(self, f):
-        return (f & self.flag) == 0
-
 class ImageNode(object):
     __slot__ = ("title")
 
     def __init__(self):
-        self.__property = {}
+        self._property = {}
 
     def __str__(self):
         return self.title
 
-    def addProperty(self, k, v):
-        self.__property[k] = v
+    def addattr(self, k, v):
+        self._property[k] = v
 
     def getProperty(self, k):
         if k in self.__property:
-            return self.__property[k]
+            return self._property[k]
         return ""
 
     @property

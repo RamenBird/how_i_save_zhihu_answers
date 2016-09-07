@@ -78,7 +78,7 @@ def save(answerurl):
         p = re.compile('<div class="zm-editable-content clearfix">(.+?)</div>', re.S)
         m = p.search(c)
         if m:
-            a = m.group()
+            a = m.group().replace('\n', '')
             if a:
                 from how_i_save_zhihu_answers.zhihuparsers import AnswerParser
                 AnswerParser().feed(a)

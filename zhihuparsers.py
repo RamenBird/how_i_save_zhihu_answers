@@ -12,11 +12,12 @@ class AnswerParser(HTMLParser):
         return self.work_stack[len(self.work_stack) - 1]
     
     def check_stack(self):
-        if hasattr(self, work_stack):
+        if hasattr(self, 'work_stack'):
             return
 
         self.work_stack = []
         self.flag = 0
+        self.ctr_msg = ''
 
 
     def add_flag(self, tag):
@@ -45,27 +46,45 @@ class AnswerParser(HTMLParser):
         elif tag == 'u':
             flag = FLAG_UNDERLINED
         
-        if self.flag & flag != 0:
+        if self.flag & flag == 0:
             raise Exception()
 
         self.flag = self.flag & ~flag
         
     
     def handle_starttag(self, tag, attrs):
+        print("Start tag :", tag)
+        self.check_stack()
+        
         if tag == 'p' or tag == 'b' or tag == 'u' or tag == 'blockquote':
             self.add_flag(tag)
             return
-        elif tag == 'img' or tag == 'br' or tag == 'a':
-            node = {'tag' : tag, 'attrs' : {}}
+        elif tag == 'img':
+            if self.ctr_msg == 'img':
+                return
+            node = ImageNode()
+            self.work_stack.append(node)
+            self.ctr_msg = 'img'
+        elif tag == 'br':
+            self.work_stack.append(ChangeLine())
+            return
+        elif tag == 'a':
+            node = LinkNode()
+            self.work_stack.append(node)
+            self.ctr_msg = 'a'
+        else:
+            return
         
         for attr in attrs:
-            node['attrs'][attr[0]] = attr[1]
+            node.addattr(attr[0], attr[1])
 
-        node.flag = self.flag
-        self.work_stack.append(node)
+        #node.flag = self.flag
             
     def handle_endtag(self, tag):
         print("End tag  :", tag)
+        if tag == 'p' or tag == 'b' or tag == 'u' or tag == 'blockquote':
+            self.remove_flag(tag)
+            return
         
     def handle_data(self, data):
         print("Data     :", data)
