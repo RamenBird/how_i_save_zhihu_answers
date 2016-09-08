@@ -20,7 +20,6 @@ config['left_padding'] = 20
 config['right_padding'] = 20
 config['bottom_padding'] = 50
 config['line_spacing'] = 5
-config['tmp_dir'] = "C:/Users/Administrator/Desktop/tmp_dir"
 config['save_tmp_text'] = True
 
 def _downloadanswer(url):
@@ -53,6 +52,9 @@ def _gettmppath():
 
     return '/Users/Administrator/Desktop/Tmp'
 
+config['tmp_dir'] = _gettmppath()
+config['outputpath'] = _gettmppath()
+
 def content(url):
     filename = os.path.join(_gettmppath(), _gettmpfilename())
     client = httpclient.HTTPClient()
@@ -81,23 +83,29 @@ def save(answerurl):
             a = m.group().replace('\n', '')
             if a:
                 from how_i_save_zhihu_answers.zhihuparsers import AnswerParser
-                AnswerParser().feed(a)
+                ans = AnswerParser().parse(a)
+                ans.title = re.compile('<title>(.+?)</title>').search(c).group(1)
+
+                from how_i_save_zhihu_answers.draw import AnswerDraw
+                from how_i_save_zhihu_answers.builders import ImageBuilder
+                AnswerDraw(ans, ImageBuilder(), config).draw()
         
 
-def img(url):
-    from how_i_save_zhihu_answers.answerdrawer import AnswerImgDownload as answerdraw
-    from how_i_save_zhihu_answers.imagebuilder import ImageBuilder
-    
-    rawstring = _downloadanswer(url)
-    ans = how_i_save_zhihu_answers.answerparser.parseanswer(rawstring)
+def img(answerurl):
+    buffer = content(answerurl)
+    if buffer:
+        c = str(buffer, 'utf-8')
+        p = re.compile('<div class="zm-editable-content clearfix">(.+?)</div>', re.S)
+        m = p.search(c)
+        if m:
+            a = m.group().replace('\n', '')
+            if a:
+                from how_i_save_zhihu_answers.zhihuparsers import AnswerParser
+                ans = AnswerParser().parse(a)
 
-    if rawstring != None and config.save_tmp_text:
-        import os
-        if not os.path.exists(config.tmp_dir):
-            os.mkdir(config.tmp_dir)
-        _saveanswer(os.path.join(config.tmp_dir, _gettmpfilename()), rawstring)
-        
-    answerdraw(ans, ImageBuilder(), config).download()    
+                from how_i_save_zhihu_answers.draw import AnswerImgDownload
+                from how_i_save_zhihu_answers.builders import ImageBuilder
+                AnswerImgDownload(ans, ImageBuilder(), config).download()
 
 
 __all__ = ['config', 'saveimage', 'img']

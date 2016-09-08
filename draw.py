@@ -1,6 +1,9 @@
-from how_i_save_zhihu_answers import zhihuanswer
-from how_i_save_zhihu_answers import imagebuilder
+from how_i_save_zhihu_answers.nodedef import *
 import os
+
+def f(url, path):
+    from how_i_save_zhihu_answers.builders import ImageBuilder
+    ImageBuilder().downloadimage(url, 0, path)
 
 class AnswerImgDownload(object):
     def __init__(self, answer, builder, config):
@@ -10,16 +13,17 @@ class AnswerImgDownload(object):
 
     def download(self):
         import os
+        from multiprocessing import Process
         config = self._config
 
         outputdir = config.outputpath
         if outputdir == None:
-            outputdir = r"C:\Users\Administrator\Desktop"
+            outputdir = "/Users/Administrator/Desktop"
+
 
         for node in self._ans.nodes:
-            if isinstance(node, zhihuanswer.ImageNode):                
-                url = node.src
-                self._builder.downloadimage(url, 0, path=outputdir)                
+            if isinstance(node, ImageNode):
+                Process(target=f, args=(node.src, outputdir)).start()             
                 
 
 class AnswerDraw(object):
@@ -51,7 +55,7 @@ class AnswerDraw(object):
 
         outputpath = config.outputpath
         if outputpath == None:
-            outputpath = r"C:\Users\Administrator\Desktop"
+            outputpath = "/Users/Administrator/Desktop"
 
         import re
         p = re.compile(r"[<>?:|/\*\"]")
@@ -142,18 +146,18 @@ class AnswerDraw(object):
         builder = self._builder
         config = self._config
         
-        if isinstance(node, zhihuanswer.ChangeLine):
+        if isinstance(node, ChangeLine):
             self.x = config.left_padding
             self.y = self.edge + config.line_spacing           
             self.edge = self.y
-        elif isinstance(node, zhihuanswer.PlainTextNode):
+        elif isinstance(node, PlainTextNode):
             self.drawtext(str(node), paint)
-        elif isinstance(node, zhihuanswer.LinkNode):
-            self.drawtext(str(node), paint, fill="blue")
-        elif isinstance(node, zhihuanswer.NodeGroup):
+        elif isinstance(node, LinkNode):
+            self.drawtext(node.text, paint, fill="blue")
+        elif isinstance(node, NodeGroup):
             for i in node:
                 self.drawnode(i, paint)
-        elif isinstance(node, zhihuanswer.ImageNode):
+        elif isinstance(node, ImageNode):
             try:
                 url = node.src
                 img = self._builder.downloadimage(url, config.width - config.left_padding - config.right_padding)
@@ -167,6 +171,6 @@ class AnswerDraw(object):
                 self.y = self.y + img.height
                 self.x = self._config.left_padding
 
-                self.drawtext(str(node), paint)
+                self.drawtext(node.text, paint)
             except Exception as e:
                 print(e)

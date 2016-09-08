@@ -11,7 +11,7 @@ class Node(object):
     def addattr(self, k, v):
         self._attrs[k] = v
 
-    def getattr(self, k):
+    def get_attr(self, k):
         if k in self._attrs:
             return self._attrs[k]
     
@@ -26,44 +26,37 @@ class ChangeLine(Node):
         return "CL"
 
 class PlainTextNode(Node):
+    def __init__(self, text):
+        super().__init__()
+        self.text = text
 
     def __str__(self):
         return self.text
 
-class LinkNode(object):
-    __slot__ = ("url", "text")
+class LinkNode(Node):
     
     def __init__(self):
-        self.flag = 0
+        super().__init__()
 
     def __str__(self):
-        return self.text
+        return 'link url:%s'%(self.text,)
 
-class ImageNode(object):
-    __slot__ = ("title")
-
+class ImageNode(Node):
     def __init__(self):
-        self._property = {}
-
+        super().__init__()
+        self.text = ""
+    
     def __str__(self):
-        return self.title
-
-    def addattr(self, k, v):
-        self._property[k] = v
-
-    def getProperty(self, k):
-        if k in self.__property:
-            return self._property[k]
-        return ""
+        return 'image source:%s'%(self.src,)
 
     @property
     def src(self):
-        if self.getProperty("data-original") == "":
-            return self.getProperty("src")
+        if self.get_attr("data-original") == "":
+            return self.get_attr("src")
 
-        return self.getProperty("data-original")
+        return self.get_attr("data-original")
 
-class NodeGroup(object):    
+class NodeGroup(Node):    
     def __init__(self):
         self._nodes = []        
         self.flag = 0
@@ -93,7 +86,7 @@ class NodeGroup(object):
 
     __slot__ = ()
 
-class ErrorNode(object):
+class ErrorNode(Node):
     def __init__(self, s):
         self._s = s
 

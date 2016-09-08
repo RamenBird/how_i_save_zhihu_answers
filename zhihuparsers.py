@@ -10,6 +10,13 @@ class AnswerParser(HTMLParser):
     def get_stack_top(self):
         self.check_stack()        
         return self.work_stack[len(self.work_stack) - 1]
+
+    def parse(self, s):
+        from how_i_save_zhihu_answers.answerdef import ZhihuAns
+        ans = ZhihuAns()
+        self.feed(s)
+        ans.nodes = self.work_stack
+        return ans
     
     def check_stack(self):
         if hasattr(self, 'work_stack'):
@@ -53,18 +60,22 @@ class AnswerParser(HTMLParser):
         
     
     def handle_starttag(self, tag, attrs):
-        print("Start tag :", tag)
+        #print("Start tag :", tag)
         self.check_stack()
+        node = None
         
         if tag == 'p' or tag == 'b' or tag == 'u' or tag == 'blockquote':
             self.add_flag(tag)
             return
         elif tag == 'img':
             if self.ctr_msg == 'img':
+                self.ctr_msg = ''
                 return
-            node = ImageNode()
-            self.work_stack.append(node)
-            self.ctr_msg = 'img'
+            elif self.ctr_msg == 'noscript':
+                node = ImageNode()
+                self.work_stack.append(node)
+            elif self.ctr_msg == '':
+                return
         elif tag == 'br':
             self.work_stack.append(ChangeLine())
             return
@@ -72,22 +83,46 @@ class AnswerParser(HTMLParser):
             node = LinkNode()
             self.work_stack.append(node)
             self.ctr_msg = 'a'
+        elif tag == 'noscript':
+            self.ctr_msg = 'noscript'
+            return
         else:
             return
-        
-        for attr in attrs:
-            node.addattr(attr[0], attr[1])
 
-        #node.flag = self.flag
+        if node:        
+            for attr in attrs:
+                node.addattr(attr[0], attr[1])
+            node.flag = self.flag
+        else:
+            print(tag, self.ctr_msg)
             
     def handle_endtag(self, tag):
-        print("End tag  :", tag)
+        #print("End tag  :", tag)
         if tag == 'p' or tag == 'b' or tag == 'u' or tag == 'blockquote':
             self.remove_flag(tag)
             return
+        elif tag == 'a':
+            self.ctr_msg = ''
+        elif tag == 'noscript':
+            self.ctr_msg = 'img'
+        else:
+            return
         
     def handle_data(self, data):
-        print("Data     :", data)
+        #print("Data     :", data)
+
+        if self.ctr_msg == '':
+            node = PlainTextNode(data)
+            node.flag = self.flag
+            self.work_stack.append(node)
+        elif self.ctr_msg == 'img':
+            node = self.get_stack_top()
+            node.text = data
+        elif self.ctr_msg == 'a':
+            node = self.get_stack_top()
+            node.text = data
+        else:
+            return
         
     def handle_comment(self, data):
         print("Comment  :", data)
